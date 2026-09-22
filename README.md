@@ -1,5 +1,7 @@
 # Deekseep Local API
 
+[![build](https://github.com/Baidaofu/deekseep-api/actions/workflows/build.yml/badge.svg)](https://github.com/Baidaofu/deekseep-api/actions/workflows/build.yml)
+
 An independent, open reimplementation of the **Local API** feature that the
 Deekseep LSPosed module ships only in its Closed edition.
 
@@ -87,6 +89,26 @@ HTTP server on a real socket, asserting 31 behaviours across both protocols
 ==== 31 passed, 0 failed ====
 ```
 
+## Continuous integration
+
+`.github/workflows/build.yml` runs two jobs on every push:
+
+1. **gateway tests (JVM)** — hermetic; needs only a JDK and `org.json`.
+2. **build module APK** — clones the upstream GPL source at the release tag,
+   applies the integration patches, builds the module, verifies the signature
+   and confirms the gateway class is present in the packaged DEX, then uploads
+   the APK as an artifact.
+
+To reproduce the module build locally:
+
+```bash
+bash ci/build-module.sh                      # clones upstream @ v1.7.5
+bash ci/build-module.sh --upstream /path/to/Deekseep   # or reuse a checkout
+```
+
+`ci/apply-local-api.py` holds the integration patches and is idempotent, so it
+is safe to re-run against a tree that is already patched.
+
 ## Configuration
 
 Settings are persisted to the `dq0_local_api` SharedPreferences file, which is
@@ -105,6 +127,32 @@ the same store the module UI uses, so the UI and server never disagree.
 - Requests are relayed through the app's authenticated session, so anything that
   can reach the port can consume that account. Treat the key like a password.
 - Request bodies are capped at 32 MiB and sockets time out after 10 minutes.
+
+## What the module contains
+
+This project does not replace the module — it restores one withheld feature into
+it. A build produced by this repository is the upstream open-source 1.7.5 core
+(~102k LOC across 140 classes: chat, account/privacy, appearance, Agent + MCP,
+backup, notifications, Java plugin framework, navigation, diagnostics, and so on)
+plus the Local API gateway described here.
+
+The upstream source edition intentionally ships these Closed-only pieces as
+stubs, and they remain stubs in this build:
+
+| Component | Status |
+| --- | --- |
+| `z1` Local API gateway | **implemented here** |
+| `z14` payload resolver | **implemented here** |
+| `z15` native `shi` core (v2.4.1 native lib dir, crypto) | stub |
+| `z16` runtime protection / anti-tamper | stub |
+| `z12` multi-account routing core (`z12core`) | stub |
+| `NativeApiPatchDecoder` (`z12decoder`) | stub |
+| `CloudPromptClient` (cloud prompts, license, community) | stub |
+| `ClosedFullDataBackupBridge` | stub |
+
+None of the stubs are required for the Local API to work. They cover licensing,
+anti-tamper and multi-account routing, which are outside the scope of this
+project.
 
 ## License
 
