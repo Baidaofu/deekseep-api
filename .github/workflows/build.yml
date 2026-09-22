@@ -75,9 +75,10 @@ jobs:
           "$ANDROID_SDK_ROOT"/build-tools/35.0.0/aapt2 dump badging "$APK" | head -n 5
           # The gateway must be present in the packaged DEX.
           unzip -o -q "$APK" classes.dex -d build/verify
-          strings build/verify/classes.dex | grep -q 'com/dsmod/probe/z1' \
+          grep -a -q 'Lcom/dsmod/probe/z1;' build/verify/classes.dex \
             || { echo "gateway class missing from DEX"; exit 1; }
-          echo "gateway class present"
+          echo "gateway classes found:"
+          grep -a -o 'Lcom/dsmod/probe/z1[A-Za-z$]*;' build/verify/classes.dex | sort -u
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
