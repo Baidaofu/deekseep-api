@@ -1,0 +1,6 @@
+# Shell scripts and Python must keep LF so they run on Linux CI.
+*.sh text eol=lf
+*.py text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.java text eol=lf
