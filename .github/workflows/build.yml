@@ -73,12 +73,35 @@ jobs:
           echo "verifying $APK"
           "$ANDROID_SDK_ROOT"/build-tools/35.0.0/apksigner verify --verbose "$APK"
           "$ANDROID_SDK_ROOT"/build-tools/35.0.0/aapt2 dump badging "$APK" | head -n 5
-          # The gateway must be present in the packaged DEX.
           unzip -o -q "$APK" classes.dex -d build/verify
+
+          # 1. The gateway must be present in the packaged DEX.
           grep -a -q 'Lcom/dsmod/probe/z1;' build/verify/classes.dex \
-            || { echo "gateway class missing from DEX"; exit 1; }
+            || { echo "FAIL: gateway class missing from DEX"; exit 1; }
           echo "gateway classes found:"
           grep -a -o 'Lcom/dsmod/probe/z1[A-Za-z$]*;' build/verify/classes.dex | sort -u
+
+          # 2. No upstream promotional content may ship in the product.
+          status=0
+          for needle in \
+            'afdian' \
+            't.me/Deekseepapp' \
+            '1106465300' \
+            'qun.qq.com' \
+            'releases/latest' \
+            'license.lllucccian' \
+            'author=lllucccian' \
+            'Sponsor via Afdian' \
+            'Community group' \
+          ; do
+            if grep -a -q -- "$needle" build/verify/classes.dex; then
+              echo "FAIL: promotional content present: $needle"
+              status=1
+            else
+              echo "ok: absent -> $needle"
+            fi
+          done
+          exit $status
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

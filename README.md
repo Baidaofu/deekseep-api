@@ -95,9 +95,9 @@ HTTP server on a real socket, asserting 31 behaviours across both protocols
 
 1. **gateway tests (JVM)** — hermetic; needs only a JDK and `org.json`.
 2. **build module APK** — clones the upstream GPL source at the release tag,
-   applies the integration patches, builds the module, verifies the signature
-   and confirms the gateway class is present in the packaged DEX, then uploads
-   the APK as an artifact.
+   applies the integration patches, builds the module, verifies the signature,
+   confirms the gateway class is present in the packaged DEX, asserts that no
+   upstream promotional content shipped, then uploads the APK as an artifact.
 
 To reproduce the module build locally:
 
@@ -153,6 +153,28 @@ stubs, and they remain stubs in this build:
 None of the stubs are required for the Local API to work. They cover licensing,
 anti-tamper and multi-account routing, which are outside the scope of this
 project.
+
+## Removed upstream content
+
+The upstream project ships a layer of update-checking and promotional UI that has
+nothing to do with the module's functionality. This build strips it, and CI
+fails if any of it reappears in the packaged DEX:
+
+| Removed | What it was |
+| --- | --- |
+| `ModuleUpdateChecker` | Polled `api.github.com/.../releases/latest` on every start and offered a download. Now a no-op; no outbound request. |
+| `DeekseepLetter` | The long "letter to developers" shown as a splash notice. Emptied. |
+| Carrier welcome dialog | A "welcome to the base package" popup with author/group details. Body emptied. |
+| Sponsor entries | "赞助开发者" / "Sponsor development" rows and their dialogs, plus the Afdian and WeChat sponsor links and QR. Removed. |
+| Community links | "交流群" / "Community group" rows, the QQ group invite URL and the Telegram group URL. Removed and blanked. |
+| "Letter to users" | The "留给使用者的信" settings row and its `LETTER_TO_USERS_CONTENT` text. Removed and blanked. |
+| Closed-edition appeal URL | `license.lllucccian.top/.../appeal`. Blanked. |
+| CA module author tag | `author=lllucccian` in the generated Magisk module metadata. Renamed. |
+
+Deliberately **kept**: the GPL-3.0 licence dialog and the upstream repository
+link. GPL-3.0 requires the licence notice to be preserved, and attribution to the
+upstream project is not promotion. This project is a derivative work of
+`lllucccian/Deekseep`, which is licensed GPL-3.0-only.
 
 ## License
 
